@@ -1,0 +1,4 @@
+idx,start_range,end_range,color
+0,0,60,g
+0,60,100,y
+0,100,180,r
