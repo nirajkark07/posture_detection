@@ -188,6 +188,7 @@ def draw_landmarks(
     for idx, landmark_px in idx_to_coordinates.items():
       drawing_spec = landmark_drawing_spec[idx] if isinstance(
           landmark_drawing_spec, Mapping) else landmark_drawing_spec
+      if drawing_spec.thickness == None: continue
       # White circle border
       circle_border_radius = max(drawing_spec.circle_radius + 1,
                                  int(drawing_spec.circle_radius * 1.2))

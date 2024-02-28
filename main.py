@@ -4,6 +4,8 @@ from utils.plot_pose_live import *
 import matplotlib.pyplot as plt
 import math
 import csv
+from mediapipe.python.solutions.pose import PoseLandmark
+from mediapipe.python.solutions.drawing_utils import DrawingSpec
 
 # Setup plot
 fig = plt.figure()
@@ -13,6 +15,29 @@ ax = fig.add_subplot(111, projection="3d")
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 mp_pose = mp.solutions.pose
+custom_style = mp_drawing_styles.get_default_pose_landmarks_style()
+custom_connections = list(mp_pose.POSE_CONNECTIONS)
+
+        # list of landmarks to exclude from the drawing
+excluded_landmarks = [
+    PoseLandmark.LEFT_EYE, 
+    PoseLandmark.RIGHT_EYE, 
+    PoseLandmark.LEFT_EYE_INNER, 
+    PoseLandmark.RIGHT_EYE_INNER, 
+    PoseLandmark.LEFT_EAR,
+    PoseLandmark.RIGHT_EAR,
+    PoseLandmark.LEFT_EYE_OUTER,
+    PoseLandmark.RIGHT_EYE_OUTER,
+    PoseLandmark.NOSE,
+    PoseLandmark.MOUTH_LEFT,
+    PoseLandmark.MOUTH_RIGHT]
+
+for landmark in excluded_landmarks:
+    # we change the way the excluded landmarks are drawn
+    custom_style[landmark] = DrawingSpec(color=(0,0,0), thickness=None, circle_radius=0) 
+    # we remove all connections which contain these landmarks
+    custom_connections = [connection_tuple for connection_tuple in custom_connections 
+                            if landmark.value not in connection_tuple]
 
 # Open webcam
 cap = cv2.VideoCapture(0) # change index
@@ -35,13 +60,10 @@ with mp_pose.Pose(
         results = pose.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
 
         if results.pose_landmarks:
-            mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+            mp_drawing.draw_landmarks(image, results.pose_landmarks, connections = custom_connections, landmark_drawing_spec=custom_style)
 
         # draw 3D pose landmarks live
         plot_world_landmarks(ax, results.pose_world_landmarks)
-
-        # draw 2D graph of the arm joint
-        # plot_2d_arm_joint(ax2, results.pose_world_landmarks, landmark_groups=LANDMARK_GROUPS)
         
         # draw image
         cv2.imshow("MediaPipePose", cv2.flip(image, 1))
