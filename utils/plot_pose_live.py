@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from .math_utils import get_coordinates, get_color
+from .math_utils import get_coordinates, get_data
 import math
 import csv
 
@@ -48,28 +48,16 @@ def plot_world_landmarks(ax, landmarks, landmark_groups=LANDMARK_GROUPS):
 
     # get coordinates for each group and plot
     for idx, group in enumerate(landmark_groups):
-        plotX, plotY, plotZ, angD = get_coordinates(landmarks, group)
-        color = get_color(csv_file, idx, angD)
-        # if idx==0:
-        #     print(angD)
-        ax.plot(plotX, plotZ, plotY, color)
+        plotX, plotY, plotZ, _ = get_coordinates(landmarks, group)
+        ax.plot(plotX, plotZ, plotY, 'g')
         ax.scatter(plotX, plotZ, plotY, c='r', marker='o', s=10)
 
     plt.pause(.001)
 
-def plot_2d_arm_joint(ax, landmarks, landmark_groups=LANDMARK_GROUPS):
-    """Plot the coordinates of the arm joint in 2D."""
-    if landmarks is None:
-        return
+def posture_color_data(landmarks, landmark_groups=LANDMARK_GROUPS):
+    for idx, group in enumerate(landmark_groups):
+        _, _, _, angD = get_coordinates(landmarks, group)
+        idcx = get_data(csv_file, idx, angD)
+        
+        return idx, idcx
 
-    ax.cla()
-
-    plotX, plotY, _, _ = get_coordinates(landmarks, landmark_groups[0])
-    color = 'b'  # You can set a specific color or use get_color function if needed
-    ax.plot(plotX, plotY, color)
-
-    ax.set_xlabel('X-axis')
-    ax.set_ylabel('Y-axis')
-    ax.set_title('Arm Joint Movement in 2D')
-    
-    plt.pause(.001)

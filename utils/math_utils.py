@@ -24,7 +24,7 @@ def calculate_angle(j1, j2, j3): # Shoulder, elbow, wrist
 
     return angD
 
-def get_color(csv_file, idx, angD):
+def get_data(csv_file, idx, angD):
     """_summary_
     Args:
         csv_file: link to the csv fil
@@ -37,9 +37,8 @@ def get_color(csv_file, idx, angD):
         reader = csv.DictReader(file)
         for row in reader:
             if int(row['idx']) == idx and int(row['start_range']) <= angD <= int(row['end_range']):
-                return row['color']
-    return 'g' # Return None if no matching range is found
-
+                return row['idxc']
+            
 def get_coordinates(landmarks, group):
     """_summary_
     Args:
