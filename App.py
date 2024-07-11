@@ -63,29 +63,10 @@ class PoseVisualizerGUI:
         self.create_initial_layout()
         self.create_views_layout()
 
-        # Generate a unique filename for each session using a timestamp
-        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-        filename = f"angles_{timestamp}.csv"
-
-        # Specify your directory path 
-        directory_path = r"D:\NIRAJ\Pose_Model" 
-
-        # If the directory doesn't exist, create it
-        if not os.path.exists(directory_path):
-            os.makedirs(directory_path)
-
-        # Create CSV file path within the specified directory
-        self.csv_file_path = os.path.join(directory_path, filename)
-
-        # Set last write time to None for timing checks
+        self.csv_filepath = r"C:\RU\MASc\GIT\posture_detection\angle_ranges.csv"
+        self.filename_coords = None
+        self.filename_intensities = None
         self.last_write_time = None
-
-        # Define the joint names
-        self.joint_names = ['L_Elbow', 'L_Shoulder', 'L_Hip', 'L_Knee', 'L_Ankle', 'L_Wrist', 'R_Elbow', 'R_Shoulder', 'R_Hip', 'R_Knee', 'R_Ankle', 'R_Wrist']
-
-        # Print the path where the CSV file will be saved
-        print(f"The CSV file will be saved to: {self.csv_file_path}")
-
 
         # Initialize drawing ultility for MediaPipe pose landmarks
         self.mp_drawing = mp.solutions.drawing_utils
@@ -123,7 +104,7 @@ class PoseVisualizerGUI:
         )
 
         # Write coords to CSV file every 5 seconds
-        self.write_time = 5
+        self.write_time = 2
 
         # CONTROL VARIABLES
         self.plotting_active = True # Initially True
@@ -220,12 +201,12 @@ class PoseVisualizerGUI:
 
         lights_dict = {
             0: self.left_elbow_lights,
-            2: self.left_shoulder_lights,
-            4: self.left_hip_lights,
-            6: self.left_knee_lights,
             1: self.right_elbow_lights,
+            2: self.left_shoulder_lights,
             3: self.right_shoulder_lights,
+            4: self.left_hip_lights,
             5: self.right_hip_lights,
+            6: self.left_knee_lights,
             7: self.right_knee_lights,
             }
 
@@ -408,7 +389,7 @@ class PoseVisualizerGUI:
 
     def initialize_live_feed(self):
         # Open webcam
-        self.cap=cv2.VideoCapture(2)
+        self.cap=cv2.VideoCapture(1)
         # Set the resolution of the webcam
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 720)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
@@ -423,10 +404,13 @@ class PoseVisualizerGUI:
         if self.plotting_active:
             self.start_timer()
             self.save_coordinates_csv = True # Set true flag
-            self.generate_blank_csv() # Generate blank csv.
+            self.save_intensities_csv = True
+            self.generate_blank_csv()
         else:
             self.stop_timer()
             self.save_coordinates_csv = False
+            self.save_intensities_csv = False
+
 
     def start_timer(self):
         if not self.timer_running:
@@ -475,39 +459,37 @@ class PoseVisualizerGUI:
         # Format the time delta to minutes and seconds
         minutes, seconds = divmod(td.seconds, 60)
         return "{:02}:{:02}".format(minutes, seconds)       
-
-    def write_angles_to_csv(self, angles):
-        try:
-            file_exists = exists(self.csv_file_path)
-            with open(self.csv_file_path, 'a', newline='') as csvfile:
-                # fieldnames = ['Time (s)', 'L_Elbow', 'L_Shoulder', 'L_Hip', 'L_Knee', 'L_Ankle', 'L_Wrist', 'R_Elbow', 'R_Shoulder', 'R_Hip', 'R_Knee', 'R_Ankle', 'R_Wrist']
-                fieldnames = ['Time (s)', 'L_Elbow_x', 'L_Elbow_y', 'L_Elbow_z', 'L_Shoulder', 'L_Hip', 'L_Knee', 'L_Ankle', 'L_Wrist', 'R_Elbow', 'R_Shoulder', 'R_Hip', 'R_Knee', 'R_Ankle', 'R_Wrist']
-                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                if not file_exists:
-                    writer.writeheader()
-                writer.writerow(angles)
-                csvfile.flush()
-                csvfile.close()
-            print(f"Data written to {self.csv_file_path}")  # Log success
-        except Exception as e:
-            print(f"Failed to write data: {e}")  # Log any exceptions
-
-    ## GENEREATE BLANK CSV FILE.
-    def generate_blank_csv(self):
-        now = datetime.now()
-        self.filename = now.strftime("%Y-%m-%d_%H-%M-%S") + ".csv"
-        with open(self.filename, 'w', newline='') as csvfile:
+    
+    # This method generates csv_template format
+    def csv_template(self, filename):
+        with open(filename, 'w', newline='') as csvfile:
             csvwriter = csv.writer(csvfile)
-            header = ["Time (s)",
-                      "L_Elbow_x", "L_Elbow_y", "L_Elbow_z",
-                      "L_Shoulder_x", "L_Shoulder_y", "L_Shoulder_z",
-                      "L_Hip_x", "L_Hip_y", "L_Hip_z",
-                      "L_Knee_x", "L_Knee_y", "L_Knee_z",
-                      "R_Elbow_x", "R_Elbow_y", "R_Elbow_z",
-                      "R_Shoulder_x", "R_Shoulder_y", "R_Shoulder_z",
-                      "R_Hip_x", "R_Hip_y", "R_Hip_z",
-                      "R_Knee_x", "R_Knee_y", "R_Knee_z",]
+            if filename == self.filename_coords:
+                header = ["Time (s)",
+                        "L_Elbow_x", "L_Elbow_y", "L_Elbow_z",
+                        "L_Shoulder_x", "L_Shoulder_y", "L_Shoulder_z",
+                        "L_Hip_x", "L_Hip_y", "L_Hip_z",
+                        "L_Knee_x", "L_Knee_y", "L_Knee_z",
+                        "R_Elbow_x", "R_Elbow_y", "R_Elbow_z",
+                        "R_Shoulder_x", "R_Shoulder_y", "R_Shoulder_z",
+                        "R_Hip_x", "R_Hip_y", "R_Hip_z",
+                        "R_Knee_x", "R_Knee_y", "R_Knee_z",]
+
+            if filename == self.filename_intensities:
+                header = ["Time (s)",
+                          "L_Elbow", "R_Elbow", "L_Shoulder", "R_Shoulder", "L_Hip", "R_Hip", "L_Knee", "R_Knee"]
+            
             csvwriter.writerow(header)
+                
+    # This method generates blank csv itself
+    def generate_blank_csv(self):
+        if self.save_coordinates_csv == True:
+            now = datetime.now()
+            self.filename_coords = "coords_" + now.strftime("%Y-%m-%d_%H-%M-%S") + ".csv"
+            self.csv_template(self.filename_coords)
+        if self.save_intensities_csv == True:
+            self.filename_intensities = "intensities_" + now.strftime("%Y-%m-%d_%H-%M-%S") + ".csv"
+            self.csv_template(self.filename_intensities)
 
     def create_3d_plot(self):
         self.figure = Figure(figsize=(5, 4), dpi=100)
@@ -528,6 +510,7 @@ class PoseVisualizerGUI:
 
         # Calculate pose using MediaPipe on the captured frame.
         results = self.pose.process(rgb_image)
+        self.intensities = [0, 0, 0, 0, 0, 0, 0, 0] # TODO: Write a function to extract the intensities. Currently being extracted through upate_posture button.
 
         # Update the video label with the new image regardless of plotting state
         if results.pose_landmarks:
@@ -561,52 +544,53 @@ class PoseVisualizerGUI:
 
             if self.posture_active:
                 self.update_posture_indicators(results.pose_world_landmarks)
-            # New function to save (x,y,z) location and posture indicator foe each.
+            # Save coordinates to csv file
             if self.save_coordinates_csv:
-                print("hello")
                 self.write_coords_to_csv(results.pose_world_landmarks)
+            if self.save_intensities_csv:
+                self.write_coords_to_csv(self.intensities)
         self.root.after(10, self.update)
 
     def update_posture_indicators(self, landmarks):
         current_time = datetime.now()
-        angles_to_write = {}
-        
         # Calculate angles for each joint
-        for idx, group in enumerate(LANDMARK_GROUPS):
-            csv_file = r'D:\NIRAJ\Pose_Model\angle_ranges.csv'
+        for idx, group in enumerate(LANDMARK_GROUPS[:8]):
             _, _, _, angD = get_coordinates(landmarks, group)
-            idcx = get_data(csv_file, idx, angD)
+            idcx = get_data(self.csv_filepath, idx, angD)
             if idcx is None:
                 continue
-
             self.change_light_color(idx, idcx)
-            # joint_name = ["L_Elbow", "L_Shoulder", "L_Hip", "L_Knee", "L_Ankle", "L_Wrist", "R_Elbow", "R_Shoulder", "R_Hip", "R_Knee", "R_Ankle", "R_Wrist"][idx]
-            joint_name = ["L_Elbow", "L_Shoulder", "L_Hip", "L_Knee", "R_Elbow", "R_Shoulder", "R_Hip", "R_Knee"][idx]
-            angles_to_write[joint_name] = angD  # Add angle to the dictionary for CSV writing
+            joint_name = ["L_Elbow", "R_Elbow", "L_Shoulder", "R_Shoulder", "L_Hip",  "R_Hip", "L_Knee", "R_Knee"][idx]
+            self.intensities[idx] = idcx # Add to intensities
 
             angle_label = self.angle_labels.get(joint_name)
             if angle_label:
                 angle_label.config(text=f"{180 - angD:.2f}°")
-        
-        # # Write angles to CSV every 5 seconds
-        # if self.last_write_time is None or (current_time - self.last_write_time).total_seconds() >= 5:
-        #     if self.plotting_active and angles_to_write:
-        #         # Add the elapsed time to the dictionary
-        #         angles_to_write['Time (s)'] = 5 * round(self.elapsed_time.total_seconds() / 5)
-        #         self.write_angles_to_csv(angles_to_write)
-        #         self.last_write_time = current_time
-    
+
     def write_coords_to_csv(self, results):
         current_time = datetime.now()
-        if self.last_write_time is None or (current_time - self.last_write_time).total_seconds() >= self.write_time: 
-            time = 5 * round(self.elapsed_time.total_seconds() / 5)
-            with open(self.filename, 'a') as outfile:
-                writer = csv.writer(outfile)
-                writer.writerow([time, results.landmark[13].x, results.landmark[13].y, results.landmark[13].z])
-                self.last_write_time = current_time
+        if self.last_write_time is None or (current_time - self.last_write_time).total_seconds() >= self.write_time:
+            time = self.write_time * round(self.elapsed_time.total_seconds() / self.write_time)
+            if self.save_coordinates_csv:
+                with open(self.filename_coords, 'a') as outfile:
+                    writer = csv.writer(outfile)
+                    writer.writerow([time, results.landmark[13].x, results.landmark[13].y, results.landmark[13].z,
+                                     results.landmark[11].x, results.landmark[11].y, results.landmark[11].z,
+                                     results.landmark[23].x, results.landmark[23].y, results.landmark[23].z,
+                                     results.landmark[25].x, results.landmark[25].y, results.landmark[25].z,
+                                     results.landmark[14].x, results.landmark[12].y, results.landmark[12].z,
+                                     results.landmark[12].x, results.landmark[12].y, results.landmark[12].z,
+                                     results.landmark[24].x, results.landmark[24].y, results.landmark[24].z,
+                                     results.landmark[26].x, results.landmark[26].y, results.landmark[26].z])
+                    self.last_write_time = current_time
+            if self.save_intensities_csv:
+                with open(self.filename_intensities, 'a') as outfile:
+                    writer = csv.writer(outfile)
+                    writer.writerow([time, self.intensities[0], self.intensities[1], self.intensities[2], self.intensities[3],
+                                    self.intensities[4], self.intensities[5], self.intensities[6], self.intensities[7]])
+                    self.last_write_time = current_time
 
-
-    def update_main_live_feed(self, image, results):                                            # THIS IS WHERE WE ARE UPDATING THE 2D plot
+    def update_main_live_feed(self, image, results):                                           
         # Convert the BGR image to RGB, then to a Tkinter PhotoImage
         rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         if results.pose_landmarks:
@@ -640,9 +624,3 @@ class PoseVisualizerGUI:
 if __name__ == "__main__":
     root = tk.Tk()
     gui = PoseVisualizerGUI(root)
-
-    # spacing of the lights 
-    # see a working GUI by next wednesday on home page add timer and tie it to the start stop button change the function to have the the plot at a stop
-    # csv file, Time (every 5 seconds )
-
-    # add wrist and ankles 
