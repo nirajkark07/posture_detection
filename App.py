@@ -12,7 +12,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from utils.plot_pose_live import plot_world_landmarks
 from utils.math_utils import get_coordinates, get_data
-from mediapipe import solutions as mp
+# from mediapipe import solutions as mp
 from datetime import datetime, timedelta
 from os.path import exists
 import mediapipe as mp
@@ -20,6 +20,7 @@ import webbrowser
 import cv2
 from mediapipe.python.solutions.pose import PoseLandmark
 from mediapipe.python.solutions.drawing_utils import DrawingSpec
+from mediapipe.framework.formats import landmark_pb2
 
 LANDMARK_GROUPS = [
     [11, 13, 15],  # left arm
@@ -33,7 +34,7 @@ LANDMARK_GROUPS = [
     [24, 23], # left hip, right hip
     [12, 11], # left shoulder, right shoulder
     [16, 15], # left wrist, right wrist
-    [28, 27] # left ankle, right ankle
+    [28, 27], # left ankle, right ankle
 ]
 
 class PoseVisualizerGUI:
@@ -63,7 +64,7 @@ class PoseVisualizerGUI:
         self.create_initial_layout()
         self.create_views_layout()
 
-        self.csv_filepath = r"C:\RU\MASc\GIT\posture_detection\angle_ranges.csv"
+        self.csv_filepath = r"E:\NIRAJ\GIT\posture_detection\angle_ranges.csv"
         self.filename_coords = None
         self.filename_intensities = None
         self.last_write_time = None
@@ -80,7 +81,7 @@ class PoseVisualizerGUI:
             PoseLandmark.LEFT_EYE, 
             PoseLandmark.RIGHT_EYE, 
             PoseLandmark.LEFT_EYE_INNER, 
-            PoseLandmark.RIGHT_EYE_INNER, 
+            # PoseLandmark.RIGHT_EYE_INNER, 
             PoseLandmark.LEFT_EAR,
             PoseLandmark.RIGHT_EAR,
             PoseLandmark.LEFT_EYE_OUTER,
@@ -104,7 +105,7 @@ class PoseVisualizerGUI:
         )
 
         # Write coords to CSV file every 5 seconds
-        self.write_time = 2
+        self.write_time = 0.5
 
         # CONTROL VARIABLES
         self.plotting_active = True # Initially True
@@ -389,7 +390,7 @@ class PoseVisualizerGUI:
 
     def initialize_live_feed(self):
         # Open webcam
-        self.cap=cv2.VideoCapture(1)
+        self.cap=cv2.VideoCapture(0)
         # Set the resolution of the webcam
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 720)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
@@ -465,15 +466,19 @@ class PoseVisualizerGUI:
         with open(filename, 'w', newline='') as csvfile:
             csvwriter = csv.writer(csvfile)
             if filename == self.filename_coords:
-                header = ["Time (s)",
-                        "L_Elbow_x", "L_Elbow_y", "L_Elbow_z",
-                        "L_Shoulder_x", "L_Shoulder_y", "L_Shoulder_z",
-                        "L_Hip_x", "L_Hip_y", "L_Hip_z",
-                        "L_Knee_x", "L_Knee_y", "L_Knee_z",
-                        "R_Elbow_x", "R_Elbow_y", "R_Elbow_z",
-                        "R_Shoulder_x", "R_Shoulder_y", "R_Shoulder_z",
-                        "R_Hip_x", "R_Hip_y", "R_Hip_z",
-                        "R_Knee_x", "R_Knee_y", "R_Knee_z",]
+                # header = ["Time (s)",
+                #         "L_Elbow_x", "L_Elbow_y", "L_Elbow_z",
+                #         "L_Shoulder_x", "L_Shoulder_y", "L_Shoulder_z",
+                #         "L_Hip_x", "L_Hip_y", "L_Hip_z",
+                #         "L_Knee_x", "L_Knee_y", "L_Knee_z",
+                #         "R_Elbow_x", "R_Elbow_y", "R_Elbow_z",
+                #         "R_Shoulder_x", "R_Shoulder_y", "R_Shoulder_z",
+                #         "R_Hip_x", "R_Hip_y", "R_Hip_z",
+                #         "R_Knee_x", "R_Knee_y", "R_Knee_z",]
+                header = ["Time",
+                          "C7", "T10", "CLAV", "LFIN", "LPSI", "RBHD", "RFIN", "LFHD", "RFHD", "STRN",
+                          "LBHD", "LSHO", "RSHO", "LELB", "RELB", "LWRB", "RWRB", "LWRA", "RWRA", "LASI",
+                          "RASI", "LKNE", "RKNE", "LANK", "RANK", "LHEE", "RHEE", "LTOE", "RTOE"]
 
             if filename == self.filename_intensities:
                 header = ["Time (s)",
@@ -497,6 +502,24 @@ class PoseVisualizerGUI:
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.root)
         canvas_widget = self.canvas.get_tk_widget()
         canvas_widget.grid(column=0, row=0, sticky="nsew")
+    
+    # def custom_landmarks(self, results):
+    #     landmark_subset = landmark_pb2.NormalizedLandmarkList(
+    #     landmark=[
+    #         results.pose_landmarks.landmark[0], results.pose_landmarks.landmark[1], results.pose_landmarks.landmark[2],
+    #         results.pose_landmarks.landmark[3], results.pose_landmarks.landmark[4], results.pose_landmarks.landmark[5],
+    #         results.pose_landmarks.landmark[6], results.pose_landmarks.landmark[7], results.pose_landmarks.landmark[8],
+    #         results.pose_landmarks.landmark[9], results.pose_landmarks.landmark[10], results.pose_landmarks.landmark[11],
+    #         results.pose_landmarks.landmark[12], results.pose_landmarks.landmark[13], results.pose_landmarks.landmark[14],
+    #         results.pose_landmarks.landmark[15], results.pose_landmarks.landmark[16], results.pose_landmarks.landmark[17],
+    #         results.pose_landmarks.landmark[18], results.pose_landmarks.landmark[19], results.pose_landmarks.landmark[20],
+    #         results.pose_landmarks.landmark[21], results.pose_landmarks.landmark[22], results.pose_landmarks.landmark[23],
+    #         results.pose_landmarks.landmark[24], results.pose_landmarks.landmark[25], results.pose_landmarks.landmark[26],
+    #         results.pose_landmarks.landmark[27], results.pose_landmarks.landmark[28], results.pose_landmarks.landmark[29],
+    #         results.pose_landmarks.landmark[30], results.pose_landmarks.landmark[31], results.pose_landmarks.landmark[32],
+    #     ]
+    #     )
+    #     return landmark_subset
 
     def update(self):
         success, image = self.cap.read()  # Capture frame-by-frame
@@ -520,6 +543,73 @@ class PoseVisualizerGUI:
             results.pose_landmarks.landmark[24].x -= 0.015
             results.pose_landmarks.landmark[23].x += 0.015
             # Draw landmarks on the RGB image if plotting is active
+
+            # NEW MARKERS: 
+
+            ##### RFHD, LFHD, RBHD, LBHD
+            # RFHD
+            results.pose_landmarks.landmark[8].y -= 0
+            results.pose_landmarks.landmark[8].x -= 0.01
+
+            # LFHD
+            results.pose_landmarks.landmark[7].y -= 0
+            results.pose_landmarks.landmark[7].x -= 0.01
+
+            # RBHD (RIGHT EYE)
+            results.pose_landmarks.landmark[5].x = results.pose_landmarks.landmark[8].x + 0.03
+            results.pose_landmarks.landmark[5].y = results.pose_landmarks.landmark[8].y
+            results.pose_landmarks.landmark[5].z = results.pose_landmarks.landmark[8].z
+
+            # LBHD (MOUTH RIGHT)
+            results.pose_landmarks.landmark[10].x = results.pose_landmarks.landmark[7].x + 0.03
+            results.pose_landmarks.landmark[10].y = results.pose_landmarks.landmark[7].y
+            results.pose_landmarks.landmark[10].z = results.pose_landmarks.landmark[7].z
+
+            # RFIN 
+            results.pose_landmarks.landmark[6].x = (results.pose_landmarks.landmark[20].x + results.pose_landmarks.landmark[18].x)/2
+            results.pose_landmarks.landmark[6].y = (results.pose_landmarks.landmark[20].y + results.pose_landmarks.landmark[18].y)/2
+            results.pose_landmarks.landmark[6].z = (results.pose_landmarks.landmark[20].z + results.pose_landmarks.landmark[18].z)/2
+
+            ## LFIN
+            results.pose_landmarks.landmark[3].x = (results.pose_landmarks.landmark[19].x + results.pose_landmarks.landmark[17].x)/2
+            results.pose_landmarks.landmark[3].y = (results.pose_landmarks.landmark[19].y + results.pose_landmarks.landmark[17].y)/2
+            results.pose_landmarks.landmark[3].z = (results.pose_landmarks.landmark[19].z + results.pose_landmarks.landmark[17].z)/2
+
+            # C7
+            results.pose_landmarks.landmark[0].x = (results.pose_landmarks.landmark[12].x + results.pose_landmarks.landmark[11].x)/2
+            results.pose_landmarks.landmark[0].y = (results.pose_landmarks.landmark[12].y + results.pose_landmarks.landmark[11].y)/2 - 0.04 # Conditional adding
+            results.pose_landmarks.landmark[0].z = (results.pose_landmarks.landmark[12].z + results.pose_landmarks.landmark[11].z)/2
+
+            # T10
+            ax = (results.pose_landmarks.landmark[11].x + results.pose_landmarks.landmark[12].x )/2
+            ay = (results.pose_landmarks.landmark[11].y + results.pose_landmarks.landmark[12].y )/2
+            az = (results.pose_landmarks.landmark[11].z + results.pose_landmarks.landmark[12].z )/2
+
+            bx = (results.pose_landmarks.landmark[23].x + results.pose_landmarks.landmark[24].x )/2
+            by = (results.pose_landmarks.landmark[23].y + results.pose_landmarks.landmark[24].y )/2
+            bz = (results.pose_landmarks.landmark[23].z + results.pose_landmarks.landmark[24].z )/2
+
+            results.pose_landmarks.landmark[1].x = (ax + bx)/2
+            results.pose_landmarks.landmark[1].y = (ay + by)/2
+            results.pose_landmarks.landmark[1].z = (az + bz)/2
+
+            # CLAV
+            results.pose_landmarks.landmark[2].x = ax - 0.02 # Conditional adding
+            results.pose_landmarks.landmark[2].y = ay
+            results.pose_landmarks.landmark[2].z = az
+
+            # STRN
+            results.pose_landmarks.landmark[9].x =  ax - 0.03 # Conditional adding
+            results.pose_landmarks.landmark[9].y =  ay + 0.09
+            results.pose_landmarks.landmark[9].z =  az 
+
+            # LPSI
+            results.pose_landmarks.landmark[4].x = results.pose_landmarks.landmark[24].x + 0.01
+            results.pose_landmarks.landmark[4].y = results.pose_landmarks.landmark[24].y
+            results.pose_landmarks.landmark[4].z = results.pose_landmarks.landmark[24].z
+
+            # RPSI (RAN OUT OF USABLE) add this column manually
+
             if self.plotting_active:
                 self.mp_drawing.draw_landmarks(
                     rgb_image, 
@@ -574,14 +664,44 @@ class PoseVisualizerGUI:
             if self.save_coordinates_csv:
                 with open(self.filename_coords, 'a') as outfile:
                     writer = csv.writer(outfile)
-                    writer.writerow([time, results.landmark[13].x, results.landmark[13].y, results.landmark[13].z,
-                                     results.landmark[11].x, results.landmark[11].y, results.landmark[11].z,
-                                     results.landmark[23].x, results.landmark[23].y, results.landmark[23].z,
-                                     results.landmark[25].x, results.landmark[25].y, results.landmark[25].z,
-                                     results.landmark[14].x, results.landmark[12].y, results.landmark[12].z,
-                                     results.landmark[12].x, results.landmark[12].y, results.landmark[12].z,
-                                     results.landmark[24].x, results.landmark[24].y, results.landmark[24].z,
-                                     results.landmark[26].x, results.landmark[26].y, results.landmark[26].z])
+                    # writer.writerow([time, results.landmark[13].x, results.landmark[13].y, results.landmark[13].z,
+                    #                  results.landmark[11].x, results.landmark[11].y, results.landmark[11].z,
+                    #                  results.landmark[23].x, results.landmark[23].y, results.landmark[23].z,
+                    #                  results.landmark[25].x, results.landmark[25].y, results.landmark[25].z,
+                    #                  results.landmark[14].x, results.landmark[12].y, results.landmark[12].z,
+                    #                  results.landmark[12].x, results.landmark[12].y, results.landmark[12].z,
+                    #                  results.landmark[24].x, results.landmark[24].y, results.landmark[24].z,
+                    #                  results.landmark[26].x, results.landmark[26].y, results.landmark[26].z])
+                    
+                    writer.writerow([time, results.landmark[0].x*10000, results.landmark[1].x*10000, results.landmark[2].x*10000, results.landmark[3].x*10000,
+                                     results.landmark[4].x*10000, results.landmark[5].x*10000, results.landmark[6].x*10000, results.landmark[7].x*10000,
+                                     results.landmark[8].x*10000, results.landmark[9].x*10000, results.landmark[10].x*10000,
+                                     results.landmark[11].x*10000, results.landmark[12].x*10000, results.landmark[13].x*10000, results.landmark[14].x*10000,
+                                     results.landmark[15].x*10000, results.landmark[16].x*10000, results.landmark[21].x*10000,
+                                     results.landmark[22].x*10000, results.landmark[23].x*10000, results.landmark[24].x*10000, results.landmark[25].x*10000, 
+                                     results.landmark[26].x*10000, results.landmark[27].x*10000, results.landmark[28].x*10000, results.landmark[29].x*10000,
+                                     results.landmark[30].x*10000, results.landmark[31].x*10000, results.landmark[32].x*10000, (results.landmark[23].x - 0.01)*10000,
+
+                                     results.landmark[0].y*10000, results.landmark[1].y*10000, results.landmark[2].y*10000, results.landmark[3].y*10000,
+                                     results.landmark[4].y*10000, results.landmark[5].y*10000, results.landmark[6].y*10000, results.landmark[7].y*10000,
+                                     results.landmark[8].y*10000, results.landmark[9].y*10000, results.landmark[10].y*10000,
+                                     results.landmark[11].y*10000, results.landmark[12].y*10000, results.landmark[13].y*10000, results.landmark[14].y*10000,
+                                     results.landmark[15].y*10000, results.landmark[16].y*10000, results.landmark[21].y*10000,
+                                     results.landmark[22].y*10000, results.landmark[23].y*10000, results.landmark[24].y*10000, results.landmark[25].y*10000, 
+                                     results.landmark[26].y*10000, results.landmark[27].y*10000, results.landmark[28].y*10000, results.landmark[29].y*10000,
+                                     results.landmark[30].y*10000, results.landmark[31].y*10000, results.landmark[32].y*10000, results.landmark[23].y*10000,
+
+                                     results.landmark[0].z*10000, results.landmark[1].z*10000, results.landmark[2].z*10000, results.landmark[3].z*10000,
+                                     results.landmark[4].z*10000, results.landmark[5].z*10000, results.landmark[6].z*10000, results.landmark[7].z*10000,
+                                     results.landmark[8].z*10000, results.landmark[9].z*10000, results.landmark[10].z*10000,
+                                     results.landmark[11].z*10000, results.landmark[12].z*10000, results.landmark[13].z*10000, results.landmark[14].z*10000,
+                                     results.landmark[15].z*10000, results.landmark[16].z*10000, results.landmark[21].z*10000,
+                                     results.landmark[22].z*10000, results.landmark[23].z*10000, results.landmark[24].z*10000, results.landmark[25].z*10000, 
+                                     results.landmark[26].z*10000, results.landmark[27].z*10000, results.landmark[28].z*10000, results.landmark[29].z*10000,
+                                     results.landmark[30].z*10000, results.landmark[31].z*10000, results.landmark[32].z*10000, results.landmark[23].z*10000
+
+                                     
+                                     ])
                     self.last_write_time = current_time
             if self.save_intensities_csv:
                 with open(self.filename_intensities, 'a') as outfile:

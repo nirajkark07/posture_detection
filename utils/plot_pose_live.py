@@ -23,7 +23,7 @@ LANDMARK_GROUPS = [
     [23, 25, 27],  # left hip, left knee, left ankle
     [24, 26, 28],  # right hip, right knee, right ankle
     [24, 23], # left hip, right hip
-    [12, 11] # left shoulder, right shoulder
+    [12, 11], # left shoulder, right shoulder
 ]
 
 csv_file = r'C:\RU\MASc\GIT\Pose_Model\angle_ranges.csv'
