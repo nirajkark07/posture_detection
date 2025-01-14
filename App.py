@@ -4,8 +4,6 @@ from PIL import Image, ImageTk
 import numpy as np
 import csv
 import matplotlib.pyplot as plt
-import os
-import math
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from mpl_toolkits.mplot3d import Axes3D
@@ -16,8 +14,8 @@ from utils.math_utils import get_coordinates, get_data
 from datetime import datetime, timedelta
 from os.path import exists
 import mediapipe as mp
-import webbrowser
 import cv2
+import pyc3dserver
 from mediapipe.python.solutions.pose import PoseLandmark
 from mediapipe.python.solutions.drawing_utils import DrawingSpec
 from mediapipe.framework.formats import landmark_pb2
@@ -478,11 +476,11 @@ class PoseVisualizerGUI:
                 header = ["Time",
                           "C7", "T10", "CLAV", "LFIN", "LPSI", "RBHD", "RFIN", "LFHD", "RFHD", "STRN",
                           "LBHD", "LSHO", "RSHO", "LELB", "RELB", "LWRB", "RWRB", "LWRA", "RWRA", "LASI",
-                          "RASI", "LKNE", "RKNE", "LANK", "RANK", "LHEE", "RHEE", "LTOE", "RTOE"]
+                          "RASI", "LKNE", "RKNE", "LANK", "RANK", "LHEE", "RHEE", "LTOE", "RTOE","RPSI"]
 
             if filename == self.filename_intensities:
                 header = ["Time (s)",
-                          "L_Elbow", "R_Elbow", "L_Shoulder", "R_Shoulder", "L_Hip", "R_Hip", "L_Knee", "R_Knee"]
+                          "L_Elbow", "R_Elbow", "L_Shoulder", "R_Shoulder", "L_Hip", "R_Hip", "L_Knee", "R_Knee", "Count_0", "Count_1", "Count_2"]
             
             csvwriter.writerow(header)
                 
@@ -502,24 +500,6 @@ class PoseVisualizerGUI:
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.root)
         canvas_widget = self.canvas.get_tk_widget()
         canvas_widget.grid(column=0, row=0, sticky="nsew")
-    
-    # def custom_landmarks(self, results):
-    #     landmark_subset = landmark_pb2.NormalizedLandmarkList(
-    #     landmark=[
-    #         results.pose_landmarks.landmark[0], results.pose_landmarks.landmark[1], results.pose_landmarks.landmark[2],
-    #         results.pose_landmarks.landmark[3], results.pose_landmarks.landmark[4], results.pose_landmarks.landmark[5],
-    #         results.pose_landmarks.landmark[6], results.pose_landmarks.landmark[7], results.pose_landmarks.landmark[8],
-    #         results.pose_landmarks.landmark[9], results.pose_landmarks.landmark[10], results.pose_landmarks.landmark[11],
-    #         results.pose_landmarks.landmark[12], results.pose_landmarks.landmark[13], results.pose_landmarks.landmark[14],
-    #         results.pose_landmarks.landmark[15], results.pose_landmarks.landmark[16], results.pose_landmarks.landmark[17],
-    #         results.pose_landmarks.landmark[18], results.pose_landmarks.landmark[19], results.pose_landmarks.landmark[20],
-    #         results.pose_landmarks.landmark[21], results.pose_landmarks.landmark[22], results.pose_landmarks.landmark[23],
-    #         results.pose_landmarks.landmark[24], results.pose_landmarks.landmark[25], results.pose_landmarks.landmark[26],
-    #         results.pose_landmarks.landmark[27], results.pose_landmarks.landmark[28], results.pose_landmarks.landmark[29],
-    #         results.pose_landmarks.landmark[30], results.pose_landmarks.landmark[31], results.pose_landmarks.landmark[32],
-    #     ]
-    #     )
-    #     return landmark_subset
 
     def update(self):
         success, image = self.cap.read()  # Capture frame-by-frame
@@ -664,51 +644,79 @@ class PoseVisualizerGUI:
             if self.save_coordinates_csv:
                 with open(self.filename_coords, 'a') as outfile:
                     writer = csv.writer(outfile)
-                    # writer.writerow([time, results.landmark[13].x, results.landmark[13].y, results.landmark[13].z,
-                    #                  results.landmark[11].x, results.landmark[11].y, results.landmark[11].z,
-                    #                  results.landmark[23].x, results.landmark[23].y, results.landmark[23].z,
-                    #                  results.landmark[25].x, results.landmark[25].y, results.landmark[25].z,
-                    #                  results.landmark[14].x, results.landmark[12].y, results.landmark[12].z,
-                    #                  results.landmark[12].x, results.landmark[12].y, results.landmark[12].z,
-                    #                  results.landmark[24].x, results.landmark[24].y, results.landmark[24].z,
-                    #                  results.landmark[26].x, results.landmark[26].y, results.landmark[26].z])
-                    
-                    writer.writerow([time, results.landmark[0].x*10000, results.landmark[1].x*10000, results.landmark[2].x*10000, results.landmark[3].x*10000,
-                                     results.landmark[4].x*10000, results.landmark[5].x*10000, results.landmark[6].x*10000, results.landmark[7].x*10000,
-                                     results.landmark[8].x*10000, results.landmark[9].x*10000, results.landmark[10].x*10000,
-                                     results.landmark[11].x*10000, results.landmark[12].x*10000, results.landmark[13].x*10000, results.landmark[14].x*10000,
-                                     results.landmark[15].x*10000, results.landmark[16].x*10000, results.landmark[21].x*10000,
-                                     results.landmark[22].x*10000, results.landmark[23].x*10000, results.landmark[24].x*10000, results.landmark[25].x*10000, 
-                                     results.landmark[26].x*10000, results.landmark[27].x*10000, results.landmark[28].x*10000, results.landmark[29].x*10000,
-                                     results.landmark[30].x*10000, results.landmark[31].x*10000, results.landmark[32].x*10000, (results.landmark[23].x - 0.01)*10000,
 
-                                     results.landmark[0].y*10000, results.landmark[1].y*10000, results.landmark[2].y*10000, results.landmark[3].y*10000,
-                                     results.landmark[4].y*10000, results.landmark[5].y*10000, results.landmark[6].y*10000, results.landmark[7].y*10000,
-                                     results.landmark[8].y*10000, results.landmark[9].y*10000, results.landmark[10].y*10000,
-                                     results.landmark[11].y*10000, results.landmark[12].y*10000, results.landmark[13].y*10000, results.landmark[14].y*10000,
-                                     results.landmark[15].y*10000, results.landmark[16].y*10000, results.landmark[21].y*10000,
-                                     results.landmark[22].y*10000, results.landmark[23].y*10000, results.landmark[24].y*10000, results.landmark[25].y*10000, 
-                                     results.landmark[26].y*10000, results.landmark[27].y*10000, results.landmark[28].y*10000, results.landmark[29].y*10000,
-                                     results.landmark[30].y*10000, results.landmark[31].y*10000, results.landmark[32].y*10000, results.landmark[23].y*10000,
+                    writer.writerow([time, results.landmark[0].x*1000, results.landmark[1].x*1000, results.landmark[2].x*1000, results.landmark[3].x*1000,
+                                     results.landmark[4].x*1000, results.landmark[5].x*1000, results.landmark[6].x*1000, results.landmark[7].x*1000,
+                                     results.landmark[8].x*1000, results.landmark[9].x*1000, results.landmark[10].x*1000,
+                                     results.landmark[11].x*1000, results.landmark[12].x*1000, results.landmark[13].x*1000, results.landmark[14].x*1000,
+                                     results.landmark[15].x*1000, results.landmark[16].x*1000, results.landmark[21].x*1000,
+                                     results.landmark[22].x*1000, results.landmark[23].x*1000, results.landmark[24].x*1000, results.landmark[25].x*1000, 
+                                     results.landmark[26].x*1000, results.landmark[27].x*1000, results.landmark[28].x*1000, results.landmark[29].x*1000,
+                                     results.landmark[30].x*1000, results.landmark[31].x*1000, results.landmark[32].x*1000, (results.landmark[23].x - 0.01)*1000,
 
-                                     results.landmark[0].z*10000, results.landmark[1].z*10000, results.landmark[2].z*10000, results.landmark[3].z*10000,
-                                     results.landmark[4].z*10000, results.landmark[5].z*10000, results.landmark[6].z*10000, results.landmark[7].z*10000,
-                                     results.landmark[8].z*10000, results.landmark[9].z*10000, results.landmark[10].z*10000,
-                                     results.landmark[11].z*10000, results.landmark[12].z*10000, results.landmark[13].z*10000, results.landmark[14].z*10000,
-                                     results.landmark[15].z*10000, results.landmark[16].z*10000, results.landmark[21].z*10000,
-                                     results.landmark[22].z*10000, results.landmark[23].z*10000, results.landmark[24].z*10000, results.landmark[25].z*10000, 
-                                     results.landmark[26].z*10000, results.landmark[27].z*10000, results.landmark[28].z*10000, results.landmark[29].z*10000,
-                                     results.landmark[30].z*10000, results.landmark[31].z*10000, results.landmark[32].z*10000, results.landmark[23].z*10000
+                                     results.landmark[0].y*1000, results.landmark[1].y*1000, results.landmark[2].y*1000, results.landmark[3].y*1000,
+                                     results.landmark[4].y*1000, results.landmark[5].y*1000, results.landmark[6].y*1000, results.landmark[7].y*1000,
+                                     results.landmark[8].y*1000, results.landmark[9].y*1000, results.landmark[10].y*1000,
+                                     results.landmark[11].y*1000, results.landmark[12].y*1000, results.landmark[13].y*1000, results.landmark[14].y*1000,
+                                     results.landmark[15].y*1000, results.landmark[16].y*1000, results.landmark[21].y*1000,
+                                     results.landmark[22].y*1000, results.landmark[23].y*1000, results.landmark[24].y*1000, results.landmark[25].y*1000, 
+                                     results.landmark[26].y*1000, results.landmark[27].y*1000, results.landmark[28].y*1000, results.landmark[29].y*1000,
+                                     results.landmark[30].y*1000, results.landmark[31].y*1000, results.landmark[32].y*1000, results.landmark[23].y*1000,
+
+                                     results.landmark[0].z*1000, results.landmark[1].z*1000, results.landmark[2].z*1000, results.landmark[3].z*1000,
+                                     results.landmark[4].z*1000, results.landmark[5].z*1000, results.landmark[6].z*1000, results.landmark[7].z*1000,
+                                     results.landmark[8].z*1000, results.landmark[9].z*1000, results.landmark[10].z*1000,
+                                     results.landmark[11].z*1000, results.landmark[12].z*1000, results.landmark[13].z*1000, results.landmark[14].z*1000,
+                                     results.landmark[15].z*1000, results.landmark[16].z*1000, results.landmark[21].z*1000,
+                                     results.landmark[22].z*1000, results.landmark[23].z*1000, results.landmark[24].z*1000, results.landmark[25].z*1000, 
+                                     results.landmark[26].z*1000, results.landmark[27].z*1000, results.landmark[28].z*1000, results.landmark[29].z*1000,
+                                     results.landmark[30].z*1000, results.landmark[31].z*1000, results.landmark[32].z*1000, results.landmark[23].z*1000
 
                                      
                                      ])
+                    # writer.writerow([time, results.landmark[0].x*10000, results.landmark[1].x*10000, results.landmark[2].x*10000, results.landmark[3].x*10000,
+                    #                  results.landmark[4].x*10000, results.landmark[5].x*10000, results.landmark[6].x*10000, results.landmark[7].x*10000,
+                    #                  results.landmark[8].x*10000, results.landmark[9].x*10000, results.landmark[10].x*10000,
+                    #                  results.landmark[11].x*10000, results.landmark[12].x*10000, results.landmark[13].x*10000, results.landmark[14].x*10000,
+                    #                  results.landmark[15].x*10000, results.landmark[16].x*10000, results.landmark[21].x*10000,
+                    #                  results.landmark[22].x*10000, results.landmark[23].x*1000, results.landmark[24].x*10000, results.landmark[25].x*1000, 
+                    #                  results.landmark[26].x*10000, results.landmark[27].x*1000, results.landmark[28].x*10000, results.landmark[29].x*1000,
+                    #                  results.landmark[30].x*10000, results.landmark[31].x*1000, results.landmark[32].x*10000, (results.landmark[23].x - 0.01)*10000,
+
+                    #                  results.landmark[0].y*10000, results.landmark[1].y*10000, results.landmark[2].y*10000, results.landmark[3].y*10000,
+                    #                  results.landmark[4].y*10000, results.landmark[5].y*10000, results.landmark[6].y*10000, results.landmark[7].y*10000,
+                    #                  results.landmark[8].y*10000, results.landmark[9].y*10000, results.landmark[10].y*10000,
+                    #                  results.landmark[11].y*10000, results.landmark[12].y*10000, results.landmark[13].y*10000, results.landmark[14].y*10000,
+                    #                  results.landmark[15].y*10000, results.landmark[16].y*10000, results.landmark[21].y*10000,
+                    #                  results.landmark[22].y*10000, results.landmark[23].y*1000, results.landmark[24].y*10000, results.landmark[25].y*1000, 
+                    #                  results.landmark[26].y*10000, results.landmark[27].y*1000, results.landmark[28].y*10000, results.landmark[29].y*1000,
+                    #                  results.landmark[30].y*10000, results.landmark[31].y*1000, results.landmark[32].y*10000, results.landmark[23].y*10000,
+
+                    #                  results.landmark[0].z*10000, results.landmark[1].z*10000, results.landmark[2].z*10000, results.landmark[3].z*10000,
+                    #                  results.landmark[4].z*10000, results.landmark[5].z*10000, results.landmark[6].z*10000, results.landmark[7].z*10000,
+                    #                  results.landmark[8].z*10000, results.landmark[9].z*10000, results.landmark[10].z*10000,
+                    #                  results.landmark[11].z*10000, results.landmark[12].z*10000, results.landmark[13].z*10000, results.landmark[14].z*10000,
+                    #                  results.landmark[15].z*10000, results.landmark[16].z*10000, results.landmark[21].z*10000,
+                    #                  results.landmark[22].z*10000, results.landmark[23].z*1000, results.landmark[24].z*10000, results.landmark[25].z*1000, 
+                    #                  results.landmark[26].z*10000, results.landmark[27].z*1000, results.landmark[28].z*10000, results.landmark[29].z*1000,
+                    #                  results.landmark[30].z*10000, results.landmark[31].z*1000, results.landmark[32].z*10000, results.landmark[23].z*10000
+
+                                     
+                    #                  ])
                     self.last_write_time = current_time
             if self.save_intensities_csv:
                 with open(self.filename_intensities, 'a') as outfile:
                     writer = csv.writer(outfile)
+
+                    # COunt how many '0', '1', and '2' appear in the intensity list
+                    count_0 = self.intensities.count('0')
+                    count_1 = self.intensities.count('1')
+                    count_2 = self.intensities.count('2')
+
                     writer.writerow([time, self.intensities[0], self.intensities[1], self.intensities[2], self.intensities[3],
-                                    self.intensities[4], self.intensities[5], self.intensities[6], self.intensities[7]])
+                                    self.intensities[4], self.intensities[5], self.intensities[6], self.intensities[7], count_0, count_1, count_2])
                     self.last_write_time = current_time
+    
 
     def update_main_live_feed(self, image, results):                                           
         # Convert the BGR image to RGB, then to a Tkinter PhotoImage
