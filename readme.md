@@ -47,9 +47,13 @@ python App.py
 ```
 
 ## Demo
-Below is a current demo of the project.
+
+https://github.com/user-attachments/assets/c1f7ebdf-226f-4856-bef4-d963baf10f3e
 
 
 ---
+
+
+
 
 
